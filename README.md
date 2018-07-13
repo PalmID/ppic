@@ -4,7 +4,7 @@
 
 ## optimize
 
-### verification
+### verification
 
 Traversing the database to find the most similar palmprint is an extremely time-consuming operation.
 
