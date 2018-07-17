@@ -154,6 +154,7 @@ case "$1" in
     stopmysql) stopmysql ;;
     reloadmysql) reloadmysql ;;
     destroymysql) destroymysql ;;
+    updateimages) updateimages ;;
     *)
         echo "Usage:"
         echo "./manage.sh startapp|runtest|createdb|dropdb|startmysql|stopmysql|reloadmysql|destroymysql|updateimages"
