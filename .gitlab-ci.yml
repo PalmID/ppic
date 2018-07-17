@@ -1,0 +1,61 @@
+stages:
+  - tests_and_lints
+  - build_image
+
+variables:
+  DOCKER_REGISTRY: registry.cn-hangzhou.aliyuncs.com/leosocy
+  IMAGE: ${DOCKER_REGISTRY}/ppic
+
+before_script:
+  - IMAGE_TAG=${IMAGE}:${CI_COMMIT_SHA:0:8}
+
+# -------------------- Tests --------------------
+build_test_coverage:
+  stage: tests_and_lints
+  image:
+    name: ${IMAGE}:ci
+  services:
+    - name: mysql:8.0
+      alias: mysql
+  coverage: '/lines[\.]+\: (\d+\.\d+)\%/'
+  script:
+    - mkdir -p build; cd build
+    - cmake ../tests; make -j
+    - ./ppic_test
+    - lcov -b . -d ppic -c -o cov.info
+    - lcov -r cov.info "/usr/*" "*/thirdparty/*" "*/tests/*" -o cov.info -q
+    - lcov -l cov.info
+    - bash <(curl -s https://codecov.io/bash) -t ${CODECOV_TOKEN}
+    - genhtml -o cov_result cov.info
+    - mv cov_result ..
+  artifacts:
+    name: coverage
+    paths:
+      - cov_result
+
+# -------------------- Lints --------------------
+cppcheck:
+  stage: tests_and_lints
+  image:
+    name: ${DOCKER_REGISTRY}/cppcheck:1.83
+  script:
+    - cppcheck --enable=warning --error-exitcode=1 -I app
+
+# -------------------- Build onbuild image --------------------
+
+build_image:
+  stage: build_image
+  image: docker:latest
+  tags:
+    - docker
+  only:
+    - master
+  when: manual
+  services:
+    - docker:dind
+  script:
+    - docker login --username ${ALIYUN_DOCKER_REGISTRY_USERNAME} --password-stdin ${ALIYUN_DOCKER_REGISTRY_PASSWD} ${DOCKER_REGISTRY}
+    - docker build -t ${IMAGE_TAG} -f Dockerfile .
+    - docker tag ${IMAGE_TAG} ${IMAGE}:latest
+    - docker push ${IMAGE}
+    
