@@ -2,7 +2,7 @@
 #   ppic app cmake  #
 #####################
 
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.0)
 
 SET(PROJECT_NAME ppic_app)
 SET(PROJECT_LIB_NAME ppic)
