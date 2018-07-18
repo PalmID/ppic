@@ -5,6 +5,8 @@ stages:
 variables:
   DOCKER_REGISTRY: registry.cn-hangzhou.aliyuncs.com/leosocy
   IMAGE: ${DOCKER_REGISTRY}/ppic
+  MYSQL_DATABASE: ${MYSQL_DATABASE}
+  MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
 
 before_script:
   - IMAGE_TAG=${IMAGE}:${CI_COMMIT_SHA:0:8}
