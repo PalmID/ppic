@@ -25,10 +25,11 @@ fi
 ########################################################################
 # ppic app environments, you can configure it according you own needs. #
 ########################################################################
-PPIC_CI_IMAGE=registry.cn-hangzhou.aliyuncs.com/leosocy/ppic:ci-test
+PPIC_CI_IMAGE=registry.cn-hangzhou.aliyuncs.com/leosocy/ppic:ci
 PPIC_CONTAINER_NAME=ppic
 APP_BUILD_DIR=build
 APP_EXE=./ppic_app
+APP_TEST_NAME=ppic_test
 DOCKER_NETWORK=ppic-net
 
 error_return() {
@@ -138,7 +139,16 @@ startapp() {
 }
 
 runtest() {
-    echo "run tests"
+    start_services
+    docker stop ${PPIC_CONTAINER_NAME} 2>/dev/null
+    docker rm -v ${PPIC_CONTAINER_NAME} 2>/dev/null
+    docker run -it --rm --name ${PPIC_CONTAINER_NAME} --network ${DOCKER_NETWORK} \
+        -v ${CurDir}:/home/ppic -w /home/ppic \
+        ${PPIC_CI_IMAGE} sh -c " \
+            mkdir -p ${APP_BUILD_DIR} && cd ${APP_BUILD_DIR} \
+            && cmake ../tests && make -j ${APP_TEST_NAME} \
+            && ./${APP_TEST_NAME} \
+        "
 }
 
 ################
