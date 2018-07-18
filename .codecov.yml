@@ -1,0 +1,38 @@
+coverage:
+  precision: 2
+  round: nearest
+  range: "90...95"
+  status:
+    project:
+      default: false
+      tests:
+        target: 90%
+        flags: tests
+      app:
+        target: 95%
+        flags: app
+    patch:
+      default: false
+      tests:
+        target: 95%
+        flags: tests
+      app:
+        target: 98%
+        flags: app
+  ignore:
+    - "thirdparty/"
+    - "configs"
+
+flags:
+  app:
+    paths:
+      - app/
+  tests:
+    paths:
+      - tests/
+
+codecov:
+  branch: master
+
+comment:
+  layout: "reach, diff, flags, files"
