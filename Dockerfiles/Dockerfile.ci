@@ -2,10 +2,13 @@ FROM frolvlad/alpine-gxx
 
 MAINTAINER leosocy@gmail.com
 
-RUN apk add --no-cache --virtual build-dependencies make cmake gcompat git \
+RUN apk add --no-cache --virtual build-dependencies make cmake gcompat linux-headers perl curl git bash \
     && cd /tmp \
     && git clone https://github.com/mysql/mysql-connector-cpp.git && cd mysql-connector-cpp/ && git checkout 8.0 && cd .. \
     && mkdir build && cd build && cmake ../mysql-connector-cpp/ && cmake --build . --config Release && cmake --build . --target install --config Release \
     && cp -P libmysqlcppconn* /usr/local/lib && mv /usr/local/mysql/connector-c++-8.0/include/mysqlx /usr/include && rm -rf /usr/local/mysql/connector-c++-8.0 \
-    && rm -rf /tmp/* \
-    && apk del git
+    && rm -rf /tmp/*
+
+COPY lcov /usr/bin
+COPY genhtml /usr/bin
+COPY geninfo /usr/bin
