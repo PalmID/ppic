@@ -21,6 +21,10 @@ TEST(SingletonTest, test_singleton_instance_address_equal) {
 }
 
 class SingletonTest {
+public:
+  const char* run() {
+    return "hello";
+  }
 private:
   friend class Singleton<SingletonTest>;
   SingletonTest() {}
@@ -30,6 +34,7 @@ TEST(SingletonTest, test_singleton_inheritance_address_equal) {
   auto p1 = Singleton<SingletonTest>::instance();
   auto p2 = Singleton<SingletonTest>::instance();
   EXPECT_EQ(p1, p2);
+  EXPECT_EQ(Singleton<SingletonTest>::instance()->run(), "hello");
 }
 
 TEST(SingletonTest, test_singleton_difference_object_address_equal) {
