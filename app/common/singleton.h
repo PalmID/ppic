@@ -27,8 +27,9 @@ public:
     return inst;
   }
 
-protected:
-  Singleton() {};
+private:
+  Singleton() {}
+  ~Singleton() {}
 };
 
 } // namespace ppic
