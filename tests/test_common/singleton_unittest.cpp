@@ -21,8 +21,8 @@ TEST(SingletonTest, test_singleton_instance_address_equal) {
 }
 
 class SingletonTest : public Singleton<SingletonTest> {
-public:
-  SingletonTest() = default;
+private:
+  SingletonTest() {};
 };
 
 TEST(SingletonTest, test_singleton_inheritance_address_equal) {
