@@ -24,7 +24,7 @@ build_test_coverage:
     - mkdir -p build; cd build
     - cmake ../tests; make -j
     - ./ppic_test
-    - lcov -b . -d ppic -c -o cov.info
+    - lcov -b . -d . -c -o cov.info
     - lcov -r cov.info "/usr/*" "*/thirdparty/*" "*/tests/*" -o cov.info -q
     - lcov -l cov.info
     - bash <(curl -s https://codecov.io/bash) -t ${CODECOV_TOKEN}
@@ -41,7 +41,7 @@ cppcheck:
   image:
     name: ${DOCKER_REGISTRY}/cppcheck:1.83
   script:
-    - cppcheck --enable=warning --error-exitcode=1 -I app
+    - cppcheck --enable=warning --error-exitcode=1 app
 
 # -------------------- Build onbuild image --------------------
 
