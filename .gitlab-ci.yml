@@ -21,11 +21,11 @@ build_test_coverage:
       alias: mysql
   coverage: '/lines[\.]+\: (\d+\.\d+)\%/'
   script:
-    - mkdir -p build; cd build
+    - mkdir -p test_build; cd test_build
     - cmake ../tests; make -j
     - ./ppic_test
     - lcov -b . -d . -c -o cov.info
-    - lcov -r cov.info "/usr/*" "*/thirdparty/*" "*/tests/*" -o cov.info -q
+    - lcov -r cov.info "/usr/*" "*/thirdparty/*" "*/tests/*" "*/test_build/*" -o cov.info -q
     - lcov -l cov.info
     - bash <(curl -s https://codecov.io/bash) -t ${CODECOV_TOKEN}
     - genhtml -o cov_result cov.info
