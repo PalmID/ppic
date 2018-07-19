@@ -21,7 +21,7 @@ TEST(SingletonTest, test_singleton_instance_address_equal) {
 }
 
 class SingletonTest : public Singleton<SingletonTest> {
-private:
+public:
   SingletonTest() {};
 };
 
