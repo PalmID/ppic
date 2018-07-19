@@ -1,5 +1,9 @@
 # ppic(Palmprint ID Center)
 
+[![pipeline status](https://gitlab.com/leosocy/ppic/badges/master/pipeline.svg)](https://gitlab.com/leosocy/ppic/commits/master)
+[![codecov](https://codecov.io/gh/PalmID/ppic/branch/master/graph/badge.svg)](https://codecov.io/gh/PalmID/ppic)
+[![MIT licensed](https://img.shields.io/badge/license-MIT-green.svg)](https://raw.githubusercontent.com/PalmID/ppic/master/LICENSE)
+
 ## service
 
 ## optimize
