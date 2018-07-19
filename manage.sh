@@ -27,10 +27,10 @@ fi
 ########################################################################
 PPIC_CI_IMAGE=registry.cn-hangzhou.aliyuncs.com/leosocy/ppic:ci
 PPIC_CONTAINER_NAME=ppic
-APP_BUILD_DIR=build
+BUILD_DIR=build
 APP_EXE=./ppic_app
 APP_TEST_NAME=ppic_test
-DOCKER_NETWORK=ppic-net
+PPIC_DOCKER_NETWORK=ppic-net
 
 error_return() {
     echo "[ERROR] $1"
@@ -56,18 +56,26 @@ is_mysql_running() {
     return $?
 }
 
+is_docker_network_exist() {
+    nn=$(docker network ls -f name=$1 | tail -n 1  | awk '{print $2}')
+    if [ "${nn}" = "$1" ]; then
+        return 1
+    fi
+    return 0
+}
+
 startmysql() {
     if [ "${PLATFORM}" != "local" ]; then
         error_return "You can only start mysql container in **local**!"
     fi
-    docker pull ${MYSQL_IMAGE} 1>/dev/null 2>&1
+    docker pull ${MYSQL_IMAGE}
     check_exec_success "$?" "pulling mysql image"
 
     docker kill ${MYSQL_CONTAINER_NAME} 1>/dev/null 2>&1
     docker rm -v ${MYSQL_CONTAINER_NAME} 1>/dev/null 2>&1
-    docker network create ${DOCKER_NETWORK}
+    docker network create ${PPIC_DOCKER_NETWORK}
     docker run -d --rm --name ${MYSQL_CONTAINER_NAME} \
-        --network ${DOCKER_NETWORK} \
+        --network ${PPIC_DOCKER_NETWORK} \
         -v ${CurDir}/configs/mysql/conf:/etc/mysql/conf.d \
         -v ${MYSQL_DATA}:/var/lib/mysql \
         -v ${MYSQL_LOG}:/var/log/mysql \
@@ -84,10 +92,15 @@ reloadmysql() {
     startmysql
 }
 
+restartmysql() {
+    stopmysql
+    startmysql
+}
+
 stopmysql() {
     docker stop ${MYSQL_CONTAINER_NAME} 1>/dev/null 2>&1
     docker rm -v ${MYSQL_CONTAINER_NAME} 1>/dev/null 2>&1
-    docker network rm ${DOCKER_NETWORK}
+    docker network rm ${PPIC_DOCKER_NETWORK}
 }
 
 destroymysql() {
@@ -127,27 +140,34 @@ start_services() {
 
 startapp() {
     start_services
+    is_docker_network_exist ${PPIC_DOCKER_NETWORK}
+    if [ $? = 0 ]; then
+        restartmysql
+    fi
     # start the rpc server
     docker stop ${PPIC_CONTAINER_NAME} 2>/dev/null
     docker rm -v ${PPIC_CONTAINER_NAME} 2>/dev/null
-    docker run -it --rm --name ${PPIC_CONTAINER_NAME} --network ${DOCKER_NETWORK} \
+    docker run -it --rm --name ${PPIC_CONTAINER_NAME} --network ${PPIC_DOCKER_NETWORK} \
         -v ${CurDir}:/home/ppic -w /home/ppic \
         ${PPIC_CI_IMAGE} sh -c " \
-            rm -rf ${APP_BUILD_DIR} && mkdir -p ${APP_BUILD_DIR} && cd ${APP_BUILD_DIR} \
+            rm -rf ${BUILD_DIR} && mkdir -p ${BUILD_DIR} && cd ${BUILD_DIR} \
             && cmake ../app && make -j && ${APP_EXE} \
         "
 }
 
 runtest() {
     start_services
+    is_docker_network_exist ${PPIC_DOCKER_NETWORK}
+    if [ $? = 0 ]; then
+        restartmysql
+    fi
     docker stop ${PPIC_CONTAINER_NAME} 2>/dev/null
     docker rm -v ${PPIC_CONTAINER_NAME} 2>/dev/null
-    docker run -it --rm --name ${PPIC_CONTAINER_NAME} --network ${DOCKER_NETWORK} \
+    docker run -it --rm --name ${PPIC_CONTAINER_NAME} --network ${PPIC_DOCKER_NETWORK} \
         -v ${CurDir}:/home/ppic -w /home/ppic \
         ${PPIC_CI_IMAGE} sh -c " \
-            mkdir -p ${APP_BUILD_DIR} && cd ${APP_BUILD_DIR} \
-            && cmake ../tests && make -j ${APP_TEST_NAME} \
-            && ./${APP_TEST_NAME} \
+            mkdir -p ${BUILD_DIR} && cd ${BUILD_DIR} \
+            && cmake ../tests && make -j build_and_test
         "
 }
 
@@ -163,11 +183,17 @@ case "$1" in
     startmysql) startmysql ;;
     stopmysql) stopmysql ;;
     reloadmysql) reloadmysql ;;
+    restartmysql) restartmysql ;;
     destroymysql) destroymysql ;;
     updateimages) updateimages ;;
     *)
         echo "Usage:"
-        echo "./manage.sh startapp|runtest|createdb|dropdb|startmysql|stopmysql|reloadmysql|destroymysql|updateimages"
+        echo "./manage.sh startapp"
+        echo "./manage.sh runtest"
+        echo "./manage.sh createdb|dropdb"
+        echo "./manage.sh startmysql|stopmysql|destroymysql"
+        echo "./manage.sh restartmysql(stop+start)|reloadmysql(destroy+start)"
+        echo "./manage.sh updateimages"
         exit 1
         ;;
 esac
