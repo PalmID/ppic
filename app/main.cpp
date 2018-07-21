@@ -6,7 +6,7 @@ using namespace ::mysqlx;
 int main(int argc, const char* argv[])
 {
     try {
-    Session sess("mysql", 33060, "root", "root123");
+    Session sess("root:root123@mysql:33060");
     cout <<"Session accepted, creating collection..." <<endl;
     Schema sch= sess.getSchema("ppic_test");
     Collection coll= sch.createCollection("c1", true);
