@@ -17,6 +17,9 @@ if [ -z ${MYSQL_DATABASE} ]; then
 fi
 MYSQL_IMAGE=mysql:8.0
 MYSQL_CONTAINER_NAME=mysql
+if [ -z ${MYSQL_CONNECTION_URL} ]; then
+    MYSQL_CONNECTION_URL=root:${MYSQL_ROOT_PASSWORD}@${MYSQL_CONTAINER_NAME}:33060
+fi
 
 if [ -z ${PLATFORM} ]; then
     PLATFORM=local
@@ -149,6 +152,7 @@ startapp() {
     docker rm -v ${PPIC_CONTAINER_NAME} 2>/dev/null
     docker run -it --rm --name ${PPIC_CONTAINER_NAME} --network ${PPIC_DOCKER_NETWORK} \
         -v ${CurDir}:/home/ppic -w /home/ppic \
+        -e MYSQL_CONNECTION_URL=${MYSQL_CONNECTION_URL} \
         ${PPIC_CI_IMAGE} sh -c " \
             rm -rf ${BUILD_DIR} && mkdir -p ${BUILD_DIR} && cd ${BUILD_DIR} \
             && cmake ../app && make -j && ${APP_EXE} \
@@ -165,6 +169,7 @@ runtest() {
     docker rm -v ${PPIC_CONTAINER_NAME} 2>/dev/null
     docker run -it --rm --name ${PPIC_CONTAINER_NAME} --network ${PPIC_DOCKER_NETWORK} \
         -v ${CurDir}:/home/ppic -w /home/ppic \
+        -e MYSQL_CONNECTION_URL=${MYSQL_CONNECTION_URL} \
         ${PPIC_CI_IMAGE} sh -c " \
             mkdir -p ${BUILD_DIR} && cd ${BUILD_DIR} \
             && cmake ../tests && make -j build_and_test

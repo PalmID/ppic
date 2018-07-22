@@ -42,10 +42,74 @@ SessionPoolOption::SessionPoolOption(const string& user, const string& password,
 }
 
 SessionPoolOption& SessionPoolOption::UrlFromEnv(const char* url_env) {
-  assert (url_env != NULL);
-  url_ = std::getenv(url_env);
+  assert (url_env != nullptr);
+  const char* url = std::getenv(url_env);
+  if (url == nullptr) {
+    throw std::runtime_error("can't get url env.");
+  }
+  url_ = url;
+}
+
+
+SessionPool::SessionPool()
+  : current_size_(0) {
+}
+
+SessionPool& SessionPool::InitPool(const SessionPoolOption& option) {
+  std::lock_guard<std::mutex> guard(pool_mtx_);
+  assert (pool_.size() == 0 && current_size_ == 0);
+  option_ = option;
+  // TODO: 根据一定的策略初始化SessionPool的初始连接数，减少使用连接时的开销。
+  // 并在可用连接不足时扩容(按照一定策略扩)，在闲置连接富余时缩容(按照一定策略缩)。
+  for (uint16_t i = 0; i < option.capacity() / 2; ++i) {
+    try {
+      std::shared_ptr<Session> session{new Session(option_.url())};
+      pool_.push_back(session);
+      current_size_++;
+    } catch (const mysqlx::Error &err) {
+      char msg[128];
+      sprintf(msg, "[ERROR] Connect to mysql %s failed.", option.url().c_str());
+      throw std::runtime_error(msg);
+    }
+  }
+  return *this;
+}
+
+void SessionPool::DestroyPool() {
+  std::lock_guard<std::mutex> guard(pool_mtx_);
+  for (auto session : pool_) {
+    session->close();
+  }
+  current_size_ = 0;
+  pool_.clear();
+}
+
+std::shared_ptr<Session> SessionPool::ObtainSession() {
+  std::unique_lock<std::mutex> lock(pool_mtx_);
+  if (pool_.size() == 0
+      && current_size_ < option_.capacity()) {
+    std::shared_ptr<Session> session{new Session(option_.url())};
+    current_size_++;
+    return session;
+  }
+
+  while (pool_.size() == 0) {
+    pool_cv_.wait(lock);
+  }
+  auto session = pool_.front();
+  pool_.pop_front();
+  return session;
+}
+
+void SessionPool::ReleaseSession(std::shared_ptr<Session>& session) {
+  std::unique_lock<std::mutex> lock(pool_mtx_);
+  // 只有引用个数为1时才能释放，不然可能会导致两个不同的线程持有相同的session
+  if (session.use_count() == 1) {
+    pool_.push_back(session);
+    pool_cv_.notify_one();
+  }
 }
 
 } // namespace db
 
-} // namespace ppic
+} // namespace ppic  

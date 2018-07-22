@@ -26,7 +26,12 @@
 #define PPIC_DB_SESSION_POOL_H_
 
 #include "common/singleton.h"
+#include "mysqlx/xdevapi.h"
 #include <string>
+#include <list>
+#include <memory>
+#include <mutex>
+#include <condition_variable>
 #include <cstdint>
 
 namespace ppic {
@@ -34,6 +39,7 @@ namespace ppic {
 namespace db {
 
 using std::string;
+using mysqlx::Session;
 
 class SessionPool;
 typedef Singleton<SessionPool> SessionPoolSingleton;
@@ -44,10 +50,9 @@ public:
   SessionPoolOption(const string& user, const string& password, const string& host, uint16_t capacity, uint16_t port=33060);
   SessionPoolOption& UrlFromEnv(const char* url_env="MYSQL_CONNECTION_URL");
   SessionPoolOption& set_capacity(uint16_t capacity) { capacity_ = capacity; }
-  const string& url() { return url_; }
+  const string& url() const { return url_; }
+  const uint16_t capacity() const { return capacity_; }
 private:
-  friend class SessionPool;
-
   string url_;
   string user_;
   string password_;
@@ -58,8 +63,20 @@ private:
 
 class SessionPool {
 public:
+  ~SessionPool() { DestroyPool(); }
+  SessionPool& InitPool(const SessionPoolOption&);  
+  std::shared_ptr<Session> ObtainSession();
+  void ReleaseSession(std::shared_ptr<Session>&);
 private:
   friend class Singleton<SessionPool>;
+  SessionPool();
+  void DestroyPool();
+
+  std::list<std::shared_ptr<Session>> pool_;
+  SessionPoolOption option_;
+  uint16_t current_size_;
+  std::mutex pool_mtx_;
+  std::condition_variable pool_cv_;
 };
 
 } // namespace db

@@ -1,14 +1,20 @@
 #include <iostream>
 #include <mysqlx/xdevapi.h>
+#include "db/session_pool.h"
 using ::std::cout;
 using ::std::endl;
 using namespace ::mysqlx;
+using ppic::db::SessionPoolOption;
+using ppic::db::SessionPool;
 int main(int argc, const char* argv[])
 {
+    SessionPoolOption option;
+    option.UrlFromEnv().set_capacity(16);
+    ppic::db::SessionPoolSingleton::instance()->InitPool(option);
     try {
-    Session sess("root:root123@mysql:33060");
+    auto sess = ppic::db::SessionPoolSingleton::instance()->ObtainSession();
     cout <<"Session accepted, creating collection..." <<endl;
-    Schema sch= sess.getSchema("ppic_test");
+    Schema sch= sess->getSchema("ppic_test");
     Collection coll= sch.createCollection("c1", true);
     cout <<"Inserting documents..." <<endl;
     coll.remove("true").execute();
@@ -76,6 +82,7 @@ int main(int argc, const char* argv[])
         cout << endl;
     }
     cout <<"Done!" <<endl;
+    ppic::db::SessionPoolSingleton::instance()->ReleaseSession(sess);
     }
     catch (const mysqlx::Error &err)
     {
