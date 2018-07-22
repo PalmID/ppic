@@ -49,7 +49,7 @@ public:
   SessionPoolOption();
   SessionPoolOption(const string& user, const string& password, const string& host, uint16_t capacity, uint16_t port=33060);
   SessionPoolOption& UrlFromEnv(const char* url_env="MYSQL_CONNECTION_URL");
-  SessionPoolOption& set_capacity(uint16_t capacity) { capacity_ = capacity; }
+  SessionPoolOption& set_capacity(uint16_t capacity) { capacity_ = capacity; return *this; }
   const string& url() const { return url_; }
   const uint16_t capacity() const { return capacity_; }
 private:

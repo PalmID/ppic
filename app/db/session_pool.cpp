@@ -48,6 +48,7 @@ SessionPoolOption& SessionPoolOption::UrlFromEnv(const char* url_env) {
     throw std::runtime_error("can't get url env.");
   }
   url_ = url;
+  return *this;
 }
 
 
