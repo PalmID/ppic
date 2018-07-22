@@ -8,8 +8,11 @@ SET(PROJECT_NAME ppic_test)
 PROJECT(${PROJECT_NAME})
 SET(PROJECT_ROOT ${CMAKE_BINARY_DIR}/..)
 
-SET(GCC_COVERAGE_COMPILE_FLAGS "-ggdb -coverage -fprofile-arcs -ftest-coverage")
-SET(GCC_COVERAGE_LINK_FLAGS    "-coverage -lgcov")
+SET(CMAKE_BUILD_TEST "1" CACHE INTERNAL "Is build test" )
+IF(${CMAKE_BUILD_TEST})
+        SET(GCC_COVERAGE_COMPILE_FLAGS "-ggdb -coverage -fprofile-arcs -ftest-coverage")
+        SET(GCC_COVERAGE_LINK_FLAGS    "-coverage -lgcov")
+ENDIF()
 SET(CMAKE_CXX_FLAGS  "--std=c++11 ${CMAKE_CXX_FLAGS} ${GCC_COVERAGE_COMPILE_FLAGS}")
 SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${GCC_COVERAGE_LINK_FLAGS}")
 
