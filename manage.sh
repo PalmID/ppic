@@ -35,6 +35,12 @@ APP_EXE=./ppic_app
 APP_TEST_NAME=ppic_test
 PPIC_DOCKER_NETWORK=ppic-net
 
+###########################
+# Google cpplint settings #
+###########################
+CPP_LINT_IMAGE=registry.cn-hangzhou.aliyuncs.com/leosocy/cpplint
+CPP_LINT_CONTAINER_NAME=cpplint
+
 error_return() {
     echo "[ERROR] $1"
     exit 1
@@ -176,6 +182,17 @@ runtest() {
         "
 }
 
+cpplint() {
+    docker stop ${CPP_LINT_CONTAINER_NAME} 2>/dev/null
+    docker rm -v ${CPP_LINT_CONTAINER_NAME} 2>/dev/null
+    docker run -it --rm --name ${CPP_LINT_CONTAINER_NAME} \
+        -v ${CurDir}:/home/ppic -w /home \
+        ${CPP_LINT_IMAGE} sh -c " \
+            cpplint --linelength=120 --extensions=h,cpp,cc,c \
+            \$(find ppic/app -name *.h -or -name *.c -or -name *.cc -or -name *.cpp)
+        "
+}
+
 ################
 # script start #
 ################
@@ -183,6 +200,7 @@ runtest() {
 case "$1" in
     startapp) startapp ;;
     runtest) runtest ;;
+    cpplint) cpplint ;;
     createdb) createdb $2 ;;
     dropdb) dropdb $2 ;;
     startmysql) startmysql ;;
@@ -195,6 +213,7 @@ case "$1" in
         echo "Usage:"
         echo "./manage.sh startapp"
         echo "./manage.sh runtest"
+        echo "./manage.sh cpplint"
         echo "./manage.sh createdb|dropdb"
         echo "./manage.sh startmysql|stopmysql|destroymysql"
         echo "./manage.sh restartmysql(stop+start)|reloadmysql(destroy+start)"
