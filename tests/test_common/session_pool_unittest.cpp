@@ -74,17 +74,6 @@ TEST(SessionPoolTest, test_capacity_2_when_3_threads_want_to_obtain_session) {
     std::lock_guard<std::mutex> guard(map_mtx);
     sess_thread.insert(std::pair<std::thread::id, long>(std::this_thread::get_id(), (long)sess.get()));
   };
-<<<<<<< HEAD
-  std::thread t1(entry, 100);
-  std::thread t2(entry, 300);
-  std::thread::id t1_id = t1.get_id();
-  std::thread::id t2_id = t2.get_id();
-  std::thread t3(entry, 0);
-  std::thread::id t3_id = t3.get_id();
-  t1.join();
-  t2.join();
-  std::this_thread::sleep_for(std::chrono::milliseconds(200));
-=======
   std::thread t1(entry, 200);
   std::thread t2(entry, 300);
   std::thread::id t1_id = t1.get_id();
@@ -94,7 +83,6 @@ TEST(SessionPoolTest, test_capacity_2_when_3_threads_want_to_obtain_session) {
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
   std::thread t3(entry, 0);
   std::thread::id t3_id = t3.get_id();
->>>>>>> 984fd1c8bd59598fce4f8f983838c839a936d1e8
   t3.join();
 
   EXPECT_TRUE(sess_thread.at(t1_id) == sess_thread.at(t3_id) || sess_thread.at(t2_id) == sess_thread.at(t3_id));
