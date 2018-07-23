@@ -22,18 +22,45 @@
  * SOFTWARE.
 \*****************************************************************************/
 
-#include "user.h"
-
+#include "models/user.h"
+#include "db/session_pool.h"
 
 namespace ppic {
 
 namespace model {
 
-std::unique_ptr<User> UserDbManager::CreateUser(const string& name)
-{
-    std::unique_ptr<User> user{new User()};
-    user->name_ = name;
-    return user;
+using ppic::db::SessionPoolSingleton;
+
+mysqlx::SqlResult UserDbManager::CreateTable(const char* table_name="user") {
+  auto session = SessionPoolSingleton::instance()->ObtainSession();
+  std::lock_guard<std::mutex> lock(table_mtx_);
+  if (!table_name_.empty() && table_name_ != table_name) {
+    char msg[128];
+    snprintf(msg, 128, "[ERROR] Can't create `user` model twice with different table name.");
+    throw std::runtime_error(msg);
+  }
+  table_name_ = table_name;
+  char create_sql[256];
+  snprintf(create_sql, 256,
+           "CREATE TABLE IF NOT EXISTS %s (             \
+            id INT UNSIGNED NOT NULL AUTO_INCREMENT,    \
+            name VARCHAR(128) NOT NULL,                 \
+            registration_date timestamp NOT NULL        \
+                DEFAULT CURRENT_TIMESTAMP,              \
+            PRIMARY KEY (id),                           \
+            INDEX id_index USING HASH (id),             \
+            AUTO_INCREMENT = 1,                         \
+            );", table_name);
+  return session->sql(create_sql).execute();
+}
+
+std::unique_ptr<User> UserDbManager::CreateUser(const string& name) {
+  auto session = SessionPoolSingleton::instance()->ObtainSession();
+  std::unique_ptr<User> user{new User()};
+  user->id_ = 0;
+  user->name_ = name;
+  user->registration_date_ = "";
+  return user;
 }
 
 } // namespace model

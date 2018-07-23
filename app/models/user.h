@@ -29,6 +29,7 @@
 #include "mysqlx/xdevapi.h"
 #include <string>
 #include <memory>
+#include <mutex>
 
 namespace ppic {
 
@@ -64,13 +65,16 @@ public:
   UserDbManager& operator=(const UserDbManager&) = delete;
 
   std::shared_ptr<Table> table() { return table_; }
+  mysqlx::SqlResult CreateTable(const char* table_name="user");
   std::unique_ptr<User> CreateUser(const string& name);
+  User GetUserById(uint64_t id);
+  mysqlx::Result DeleteById(uint64_t id);
 private:
   friend class Singleton<UserDbManager>;
-  UserDbManager() {}
-  ~UserDbManager() {}
+  UserDbManager() : table_name_("") {}
 
   string table_name_;
+  std::mutex table_mtx_;
   std::shared_ptr<Table> table_;
 };
 
