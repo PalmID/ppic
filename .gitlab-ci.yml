@@ -42,7 +42,7 @@ cppcheck:
   image:
     name: ${DOCKER_REGISTRY}/cppcheck:1.83
   script:
-    - cppcheck --enable=warning --error-exitcode=1 app
+    - cppcheck -j 4 --enable=warning,performance --error-exitcode=1 app
 
 # -------------------- Build onbuild image --------------------
 

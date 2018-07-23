@@ -21,7 +21,8 @@ coverage:
         flags: app
   ignore:
     - "thirdparty/"
-    - "configs"
+    - "configs/"
+    - "app/main.cpp"
 
 flags:
   app:
