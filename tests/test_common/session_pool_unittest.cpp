@@ -49,6 +49,17 @@ TEST(SessionPoolOptionTest, test_url_with_env) {
   unsetenv(variable);
 }
 
+TEST(SessionPoolOptionTest, test_url_with_env_doesnt_exist) {
+  const char* variable = "MYSQL_CONNECTION_URL_TEST";
+  SessionPoolOption option;
+  EXPECT_THROW(option.UrlFromEnv(variable).set_capacity(16).url(), std::runtime_error);
+}
+
+TEST(SessionPoolTest, test_incorrect_mysql_url_when_create_session) {
+  SessionPoolOption option("root", "incorrect", "mysql", 16);
+  EXPECT_THROW(SessionPoolSingleton::instance()->InitPool(option), std::runtime_error);
+}
+
 TEST(SessionPoolTest, test_capacity_2_when_3_threads_want_to_obtain_session) {
   SessionPoolOption option;
   option.UrlFromEnv().set_capacity(2);
@@ -64,14 +75,13 @@ TEST(SessionPoolTest, test_capacity_2_when_3_threads_want_to_obtain_session) {
     sess_thread.insert(std::pair<std::thread::id, long>(std::this_thread::get_id(), (long)sess.get()));
   };
   std::thread t1(entry, 100);
-  std::thread t2(entry, 300);
+  std::thread t2(entry, 200);
+  std::thread t3(entry, 300);
   std::thread::id t1_id = t1.get_id();
   std::thread::id t2_id = t2.get_id();
-  std::thread t3(entry, 0);
   std::thread::id t3_id = t3.get_id();
   t1.join();
   t2.join();
-  std::this_thread::sleep_for(std::chrono::milliseconds(200));
   t3.join();
 
   EXPECT_TRUE(sess_thread.at(t1_id) == sess_thread.at(t3_id) || sess_thread.at(t2_id) == sess_thread.at(t3_id));
