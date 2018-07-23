@@ -78,11 +78,11 @@ TEST(SessionPoolTest, test_capacity_2_when_3_threads_want_to_obtain_session) {
   std::thread t2(entry, 300);
   std::thread::id t1_id = t1.get_id();
   std::thread::id t2_id = t2.get_id();
-  std::thread t3(entry, 0);
-  std::thread::id t3_id = t3.get_id();
   t1.join();
   t2.join();
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  std::thread t3(entry, 0);
+  std::thread::id t3_id = t3.get_id();
   t3.join();
 
   EXPECT_TRUE(sess_thread.at(t1_id) == sess_thread.at(t3_id) || sess_thread.at(t2_id) == sess_thread.at(t3_id));
