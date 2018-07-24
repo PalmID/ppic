@@ -42,7 +42,7 @@ mysqlx::SqlResult UserDbManager::CreateTable(const char* table_name) {
   table_name_ = table_name;
   char create_sql[256];
   snprintf(create_sql, 256,
-           "CREATE TABLE IF NOT EXISTS %s (           \
+           "CREATE TABLE IF NOT EXISTS %s (             \
             id INT UNSIGNED NOT NULL AUTO_INCREMENT,    \
             name VARCHAR(128) NOT NULL,                 \
             registration_date TIMESTAMP NOT NULL        \
