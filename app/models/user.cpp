@@ -31,7 +31,7 @@ namespace model {
 
 using ppic::db::SessionPoolSingleton;
 
-mysqlx::SqlResult UserDbManager::CreateTable(const char* table_name="user") {
+mysqlx::SqlResult UserDbManager::CreateTable(const char* table_name) {
   auto session = SessionPoolSingleton::instance()->ObtainSession();
   std::lock_guard<std::mutex> lock(table_mtx_);
   if (!table_name_.empty() && table_name_ != table_name) {
@@ -42,14 +42,12 @@ mysqlx::SqlResult UserDbManager::CreateTable(const char* table_name="user") {
   table_name_ = table_name;
   char create_sql[256];
   snprintf(create_sql, 256,
-           "CREATE TABLE IF NOT EXISTS %s (             \
+           "CREATE TABLE IF NOT EXISTS %s (           \
             id INT UNSIGNED NOT NULL AUTO_INCREMENT,    \
             name VARCHAR(128) NOT NULL,                 \
-            registration_date timestamp NOT NULL        \
+            registration_date TIMESTAMP NOT NULL        \
                 DEFAULT CURRENT_TIMESTAMP,              \
-            PRIMARY KEY (id),                           \
-            INDEX id_index USING HASH (id),             \
-            AUTO_INCREMENT = 1,                         \
+            PRIMARY KEY (id)                            \
             );", table_name);
   return session->sql(create_sql).execute();
 }
