@@ -23,6 +23,7 @@
 \*****************************************************************************/
 
 #include "db/session_pool.h"
+#include "db/smart_session.h"
 #include <cstdlib>
 #include <cassert>
 
@@ -74,7 +75,7 @@ SessionPool& SessionPool::InitPool(const SessionPoolOption& option) {
   // 并在可用连接不足时扩容(按照一定策略扩)，在闲置连接富余时缩容(按照一定策略缩)。
   for (uint16_t i = 0; i < option.capacity() / 2; ++i) {
     try {
-      std::shared_ptr<Session> session{new Session(option_.url())};
+      std::shared_ptr<Session> session{new SmartSession(option_)};
       pool_.push_back(session);
       current_size_++;
     } catch (const mysqlx::Error &err) {
@@ -99,7 +100,7 @@ std::shared_ptr<Session> SessionPool::ObtainSession() {
   std::unique_lock<std::mutex> lock(pool_mtx_);
   if (pool_.size() == 0
       && current_size_ < option_.capacity()) {
-    std::shared_ptr<Session> session{new Session(option_.url())};
+    std::shared_ptr<Session> session{new SmartSession(option_)};
     current_size_++;
     return session;
   }
