@@ -8,17 +8,21 @@ coverage:
       tests:
         target: 90%
         flags: tests
+        base: auto
       app:
         target: 95%
         flags: app
+        base: auto
     patch:
       default: false
       tests:
         target: 95%
         flags: tests
+        base: auto
       app:
         target: 98%
         flags: app
+        base: auto
   ignore:
     - "thirdparty/"
     - "configs/"

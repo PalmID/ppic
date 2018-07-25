@@ -159,6 +159,7 @@ startapp() {
     docker run -it --rm --name ${PPIC_CONTAINER_NAME} --network ${PPIC_DOCKER_NETWORK} \
         -v ${CurDir}:/home/ppic -w /home/ppic \
         -e MYSQL_CONNECTION_URL=${MYSQL_CONNECTION_URL} \
+        -e MYSQL_DATABASE=${MYSQL_DATABASE} \
         ${PPIC_CI_IMAGE} sh -c " \
             rm -rf ${BUILD_DIR} && mkdir -p ${BUILD_DIR} && cd ${BUILD_DIR} \
             && cmake ../app && make -j && ${APP_EXE} \
@@ -176,6 +177,7 @@ runtest() {
     docker run -it --rm --name ${PPIC_CONTAINER_NAME} --network ${PPIC_DOCKER_NETWORK} \
         -v ${CurDir}:/home/ppic -w /home/ppic \
         -e MYSQL_CONNECTION_URL=${MYSQL_CONNECTION_URL} \
+        -e MYSQL_DATABASE=${MYSQL_DATABASE} \
         ${PPIC_CI_IMAGE} sh -c " \
             mkdir -p ${BUILD_DIR} && cd ${BUILD_DIR} \
             && cmake ../tests && make -j build_and_test

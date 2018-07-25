@@ -1,9 +1,9 @@
 /****************************************************************************\
- * Created on Thu Jul 19 2018
- *
+ * Created on Tue Jul 24 2018
+ * 
  * The MIT License (MIT)
  * Copyright (c) 2018 leosocy
- *
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the ",Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -22,63 +22,34 @@
  * SOFTWARE.
 \*****************************************************************************/
 
-#ifndef PPIC_APP_MODELS_USER_H_
-#define PPIC_APP_MODELS_USER_H_
+#ifndef PPIC_DB_SMART_SESSION_H_
+#define PPIC_DB_SMART_SESSION_H_
 
-#include "common/singleton.h"
 #include "mysqlx/xdevapi.h"
 #include <string>
 #include <memory>
-#include <mutex>
 
 namespace ppic {
 
-namespace model {
+namespace db {
 
-class UserDbManager;
-typedef Singleton<UserDbManager> UserDbManagerSingleton;
+class SessionPoolOption;
 
-using std::string;
-using mysqlx::Table;
-
-class User {
+class SmartSession : public mysqlx::Session {
  public:
-  User(const User&) = delete;
-  User& operator=(const User&) = delete;
+  SmartSession(const SessionPoolOption&);
 
-  uint64_t id() { return id_; }
-  const string& name() { return name_; }
-  const string& registration_date() { return registration_date_ ; }
+  // Same functionality as SQL `USE db_name;`
+  // Default schema is `db_name` when it is specified in `SessionPoolOption`
+  SmartSession& SelectSchema(const char* schema_name);
+  // Return current schema, if there are no schema it will throw an error.
+  mysqlx::Schema& GetCurrentSchema() const;
  private:
-  friend class UserDbManager;
-  User() {}
-
-  uint64_t id_;
-  string name_;
-  string registration_date_;
+  std::shared_ptr<mysqlx::Schema> current_schema_;
 };
 
-class UserDbManager {
- public:
-  UserDbManager(const UserDbManager&) = delete;
-  UserDbManager& operator=(const UserDbManager&) = delete;
+}   // namespace db
 
-  std::shared_ptr<Table> table() { return table_; }
-  mysqlx::SqlResult CreateTable(const char* table_name="user");
-  std::unique_ptr<User> CreateUser(const string& name);
-  //User GetUserById(uint64_t id);
-  //mysqlx::Result DeleteById(uint64_t id);
- private:
-  friend class Singleton<UserDbManager>;
-  UserDbManager() : table_name_("") {}
+}   // namespace ppic
 
-  string table_name_;
-  std::mutex table_mtx_;
-  std::shared_ptr<Table> table_;
-};
-
-}   // namespace model
-
-}  // namespace ppic
-
-#endif  // PPIC_APP_MODELS_USER_H_
+#endif // PPIC_DB_SMART_SESSION_H_

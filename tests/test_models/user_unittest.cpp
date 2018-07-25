@@ -1,9 +1,9 @@
 /****************************************************************************\
- * Created on Thu Jul 19 2018
- *
+ * Created on Tue Jul 24 2018
+ * 
  * The MIT License (MIT)
  * Copyright (c) 2018 leosocy
- *
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the ",Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -22,63 +22,37 @@
  * SOFTWARE.
 \*****************************************************************************/
 
-#ifndef PPIC_APP_MODELS_USER_H_
-#define PPIC_APP_MODELS_USER_H_
-
-#include "common/singleton.h"
+#include "models/user.h"
+#include "db/session_pool.h"
+#include "gtest/gtest.h"
 #include "mysqlx/xdevapi.h"
-#include <string>
 #include <memory>
-#include <mutex>
 
-namespace ppic {
+namespace {
 
-namespace model {
+using mysqlx::SqlResult;
+using ppic::db::SessionPool;
+using ppic::db::SessionPoolOption;
+using ppic::db::SessionPoolSingleton;
+using ppic::model::User;
+using ppic::model::UserDbManager;
+using ppic::model::UserDbManagerSingleton;
 
-class UserDbManager;
-typedef Singleton<UserDbManager> UserDbManagerSingleton;
-
-using std::string;
-using mysqlx::Table;
-
-class User {
- public:
-  User(const User&) = delete;
-  User& operator=(const User&) = delete;
-
-  uint64_t id() { return id_; }
-  const string& name() { return name_; }
-  const string& registration_date() { return registration_date_ ; }
- private:
-  friend class UserDbManager;
-  User() {}
-
-  uint64_t id_;
-  string name_;
-  string registration_date_;
+class UserModelTestFixture : public testing::Test {
+ protected:
+  virtual void SetUp() {
+    SessionPoolOption option;
+    option.FromEnv().set_capacity(4);
+    SessionPoolSingleton::instance()->InitPool(option);
+  }
+  virtual void TearDown() {
+    SessionPoolSingleton::instance()->DestroyPool();
+  }
 };
 
-class UserDbManager {
- public:
-  UserDbManager(const UserDbManager&) = delete;
-  UserDbManager& operator=(const UserDbManager&) = delete;
+TEST_F(UserModelTestFixture, test_create_table) {
+  auto sess = SessionPoolSingleton::instance()->ObtainSession();
+  SqlResult result = UserDbManagerSingleton::instance()->CreateTable();
+}
 
-  std::shared_ptr<Table> table() { return table_; }
-  mysqlx::SqlResult CreateTable(const char* table_name="user");
-  std::unique_ptr<User> CreateUser(const string& name);
-  //User GetUserById(uint64_t id);
-  //mysqlx::Result DeleteById(uint64_t id);
- private:
-  friend class Singleton<UserDbManager>;
-  UserDbManager() : table_name_("") {}
-
-  string table_name_;
-  std::mutex table_mtx_;
-  std::shared_ptr<Table> table_;
-};
-
-}   // namespace model
-
-}  // namespace ppic
-
-#endif  // PPIC_APP_MODELS_USER_H_
+}   // namespace 

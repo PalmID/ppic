@@ -30,6 +30,8 @@
 #include <thread>
 #include <chrono>
 
+namespace {
+
 using ppic::db::SessionPoolSingleton;
 using ppic::db::SessionPoolOption;
 
@@ -39,20 +41,27 @@ TEST(SessionPoolOptionTest, test_url_with_constructor_parameters) {
   EXPECT_EQ(option.capacity(), 16);
 }
 
-TEST(SessionPoolOptionTest, test_url_with_env) {
-  const char* variable = "MYSQL_CONNECTION_URL_TEST";
+TEST(SessionPoolOptionTest, test_url_and_db_with_env) {
+  const char* url_env = "MYSQL_CONNECTION_URL_TEST";
   const char* url = "root:123@localhost:12345";
-  setenv(variable, url, 1);
+  const char* db_env = "MYSQL_DATABASE_TEST";
+  const char* db = "test";
+  setenv(url_env, url, 1);
+  setenv(db_env, db, 1);
   SessionPoolOption option;
-  EXPECT_EQ(option.UrlFromEnv(variable).set_capacity(16).url(), url);
+  EXPECT_EQ(option.FromEnv(url_env, db_env).set_capacity(16).url(), url);
+  EXPECT_EQ(option.db(), db);
   EXPECT_EQ(option.capacity(), 16);
-  unsetenv(variable);
+  unsetenv(url_env);
+  unsetenv(db_env);
 }
 
 TEST(SessionPoolOptionTest, test_url_with_env_doesnt_exist) {
-  const char* variable = "MYSQL_CONNECTION_URL_TEST";
+  const char* url_env = "MYSQL_CONNECTION_URL_TEST";
   SessionPoolOption option;
-  EXPECT_THROW(option.UrlFromEnv(variable).set_capacity(16).url(), std::runtime_error);
+  EXPECT_THROW(option.FromEnv(url_env).set_capacity(16).url(), std::runtime_error);
+  const char* db_env = "MYSQL_DB_TEST";
+  EXPECT_THROW(option.FromEnv("MYSQL_CONNECTION_URL", db_env).set_capacity(16).url(), std::runtime_error);
 }
 
 TEST(SessionPoolTest, test_incorrect_mysql_url_when_create_session) {
@@ -62,7 +71,7 @@ TEST(SessionPoolTest, test_incorrect_mysql_url_when_create_session) {
 
 TEST(SessionPoolTest, test_capacity_2_when_3_threads_want_to_obtain_session) {
   SessionPoolOption option;
-  option.UrlFromEnv().set_capacity(2);
+  option.FromEnv().set_capacity(2);
   SessionPoolSingleton::instance()->InitPool(option);
 
   std::map<std::thread::id, long> sess_thread;
@@ -86,4 +95,8 @@ TEST(SessionPoolTest, test_capacity_2_when_3_threads_want_to_obtain_session) {
   t3.join();
 
   EXPECT_TRUE(sess_thread.at(t1_id) == sess_thread.at(t3_id) || sess_thread.at(t2_id) == sess_thread.at(t3_id));
+
+  SessionPoolSingleton::instance()->DestroyPool();
 }
+
+}   // namespace

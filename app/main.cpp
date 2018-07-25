@@ -9,7 +9,7 @@ using ppic::db::SessionPool;
 int main(int argc, const char* argv[])
 {
     SessionPoolOption option;
-    option.UrlFromEnv().set_capacity(16);
+    option.FromEnv().set_capacity(16);
     ppic::db::SessionPoolSingleton::instance()->InitPool(option);
     try {
     auto sess = ppic::db::SessionPoolSingleton::instance()->ObtainSession();

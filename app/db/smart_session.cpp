@@ -1,9 +1,9 @@
 /****************************************************************************\
- * Created on Thu Jul 19 2018
- *
+ * Created on Wed Jul 25 2018
+ * 
  * The MIT License (MIT)
  * Copyright (c) 2018 leosocy
- *
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the ",Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -22,30 +22,29 @@
  * SOFTWARE.
 \*****************************************************************************/
 
-#ifndef PPIC_APP_COMMON_SINGLETON_H_
-#define PPIC_APP_COMMON_SINGLETON_H_
-
-#include <memory>
+#include "db/smart_session.h"
+#include "db/session_pool.h"
 
 namespace ppic {
 
-template <class T>
-class Singleton {
- public:
-  Singleton& operator=(const Singleton&) = delete;
-  Singleton(const Singleton&) = delete;
+namespace db {
 
-  static std::shared_ptr<T> instance()
-  {
-    static std::shared_ptr<T> inst{new T};
-    return inst;
-  }
+using mysqlx::Schema;
 
- private:
-  Singleton() {}
-  ~Singleton() {}
-};
+SmartSession::SmartSession(const SessionPoolOption& option)
+  : Session(option.url()) {
+  current_schema_ = std::make_shared<Schema>(createSchema(option.db(), true));
+}
 
-} // namespace ppic
+SmartSession& SmartSession::SelectSchema(const char* schema_name) {
+  current_schema_ = std::make_shared<Schema>(createSchema(schema_name, true));
+  return *this;
+}
 
-#endif //PPIC_APP_COMMON_SINGLETON_H_
+Schema& SmartSession::GetCurrentSchema() const {
+  return *current_schema_.get();
+}
+
+}   // namespace db
+
+}   // namespace ppic
