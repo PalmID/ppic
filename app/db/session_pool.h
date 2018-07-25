@@ -45,32 +45,35 @@ class SessionPool;
 typedef Singleton<SessionPool> SessionPoolSingleton;
 
 class SessionPoolOption {
-public:
+ public:
   SessionPoolOption();
   SessionPoolOption(const string& user, const string& password, const string& host, uint16_t capacity, uint16_t port=33060);
-  SessionPoolOption& UrlFromEnv(const char* url_env="MYSQL_CONNECTION_URL");
+  SessionPoolOption& FromEnv(const char* url_env="MYSQL_CONNECTION_URL",
+                             const char* db_env="MYSQL_DATABASE");
   SessionPoolOption& set_capacity(uint16_t capacity) { capacity_ = capacity; return *this; }
   const string& url() const { return url_; }
+  const string& db() const { return db_; }
   const uint16_t capacity() const { return capacity_; }
-private:
+ private:
   string url_;
   string user_;
   string password_;
   string host_;
   uint16_t port_;
+  string db_;
   uint16_t capacity_;
 };
 
 class SessionPool {
-public:
+ public:
   ~SessionPool() { DestroyPool(); }
-  SessionPool& InitPool(const SessionPoolOption&);  
+  SessionPool& InitPool(const SessionPoolOption&);
+  void DestroyPool();
   std::shared_ptr<Session> ObtainSession();
   void ReleaseSession(std::shared_ptr<Session>&);
-private:
+ private:
   friend class Singleton<SessionPool>;
   SessionPool();
-  void DestroyPool();
 
   std::list<std::shared_ptr<Session>> pool_;
   SessionPoolOption option_;

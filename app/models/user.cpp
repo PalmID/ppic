@@ -40,8 +40,8 @@ mysqlx::SqlResult UserDbManager::CreateTable(const char* table_name) {
     throw std::runtime_error(msg);
   }
   table_name_ = table_name;
-  char create_sql[256];
-  snprintf(create_sql, 256,
+  char create_sql[1024];
+  snprintf(create_sql, 1024,
            "CREATE TABLE IF NOT EXISTS %s (             \
             id INT UNSIGNED NOT NULL AUTO_INCREMENT,    \
             name VARCHAR(128) NOT NULL,                 \
@@ -49,6 +49,7 @@ mysqlx::SqlResult UserDbManager::CreateTable(const char* table_name) {
                 DEFAULT CURRENT_TIMESTAMP,              \
             PRIMARY KEY (id)                            \
             );", table_name);
+  session->sql("use ppic_test;").execute();
   return session->sql(create_sql).execute();
 }
 
@@ -61,6 +62,6 @@ std::unique_ptr<User> UserDbManager::CreateUser(const string& name) {
   return user;
 }
 
-} // namespace model
+}   // namespace model
 
-} // namespace ppic
+}   // namespace ppic

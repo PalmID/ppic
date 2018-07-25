@@ -42,15 +42,14 @@ using std::string;
 using mysqlx::Table;
 
 class User {
-public:
+ public:
   User(const User&) = delete;
   User& operator=(const User&) = delete;
 
   uint64_t id() { return id_; }
   const string& name() { return name_; }
   const string& registration_date() { return registration_date_ ; }
-protected:
-private:
+ private:
   friend class UserDbManager;
   User() {}
 
@@ -60,16 +59,16 @@ private:
 };
 
 class UserDbManager {
-public:
+ public:
   UserDbManager(const UserDbManager&) = delete;
   UserDbManager& operator=(const UserDbManager&) = delete;
 
   std::shared_ptr<Table> table() { return table_; }
   mysqlx::SqlResult CreateTable(const char* table_name="user");
   std::unique_ptr<User> CreateUser(const string& name);
-  User GetUserById(uint64_t id);
-  mysqlx::Result DeleteById(uint64_t id);
-private:
+  //User GetUserById(uint64_t id);
+  //mysqlx::Result DeleteById(uint64_t id);
+ private:
   friend class Singleton<UserDbManager>;
   UserDbManager() : table_name_("") {}
 
@@ -78,8 +77,8 @@ private:
   std::shared_ptr<Table> table_;
 };
 
-} // namespace model
+}   // namespace model
 
-} // namespace ppic
+}  // namespace ppic
 
-#endif //PPIC_APP_MODELS_USER_H_
+#endif  // PPIC_APP_MODELS_USER_H_

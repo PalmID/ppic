@@ -26,6 +26,8 @@
 #include "gtest/gtest.h"
 #include <stdio.h>
 
+namespace {
+
 using ppic::Singleton;
 
 TEST(SingletonTest, test_singleton_instance_address_equal) {
@@ -56,3 +58,5 @@ TEST(SingletonTest, test_singleton_difference_object_address_equal) {
   auto p2 = Singleton<SingletonTest>::instance();
   EXPECT_NE((unsigned long*)p1.get(), (unsigned long*)p2.get());
 }
+
+}   // namespace

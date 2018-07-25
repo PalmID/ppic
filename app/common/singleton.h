@@ -31,7 +31,7 @@ namespace ppic {
 
 template <class T>
 class Singleton {
-public:
+ public:
   Singleton& operator=(const Singleton&) = delete;
   Singleton(const Singleton&) = delete;
 
@@ -41,7 +41,7 @@ public:
     return inst;
   }
 
-private:
+ private:
   Singleton() {}
   ~Singleton() {}
 };

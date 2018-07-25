@@ -41,13 +41,23 @@ SessionPoolOption::SessionPoolOption(const string& user, const string& password,
     url_ = url;
 }
 
-SessionPoolOption& SessionPoolOption::UrlFromEnv(const char* url_env) {
-  assert (url_env != nullptr);
+SessionPoolOption& SessionPoolOption::FromEnv(const char* url_env, const char* db_env) {
+  assert (url_env != nullptr && db_env != nullptr);
   const char* url = std::getenv(url_env);
   if (url == nullptr) {
-    throw std::runtime_error("can't get url env.");
+    char msg[128] = {0};
+    snprintf(msg, 128, "Can't get %s environment.", url_env);
+    throw std::runtime_error(msg);
   }
   url_ = url;
+
+  const char* db = std::getenv(db_env);
+  if (db == nullptr) {
+    char msg[128] = {0};
+    snprintf(msg, 128, "Can't get %s environment.", db_env);
+    throw std::runtime_error(msg);
+  }
+  db_ = db;
   return *this;
 }
 
@@ -111,6 +121,6 @@ void SessionPool::ReleaseSession(std::shared_ptr<Session>& session) {
   }
 }
 
-} // namespace db
+}   // namespace db
 
-} // namespace ppic  
+}   // namespace ppic  
