@@ -57,9 +57,11 @@ TEST(SessionPoolOptionTest, test_url_and_db_with_env) {
 }
 
 TEST(SessionPoolOptionTest, test_url_with_env_doesnt_exist) {
-  const char* variable = "MYSQL_CONNECTION_URL_TEST";
+  const char* url_env = "MYSQL_CONNECTION_URL_TEST";
   SessionPoolOption option;
-  EXPECT_THROW(option.FromEnv(variable).set_capacity(16).url(), std::runtime_error);
+  EXPECT_THROW(option.FromEnv(url_env).set_capacity(16).url(), std::runtime_error);
+  const char* db_env = "MYSQL_DB_TEST";
+  EXPECT_THROW(option.FromEnv("MYSQL_CONNECTION_URL", db_env).set_capacity(16).url(), std::runtime_error);
 }
 
 TEST(SessionPoolTest, test_incorrect_mysql_url_when_create_session) {
