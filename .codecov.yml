@@ -15,10 +15,10 @@ coverage:
       default: off
       tests:
         target: 95%
-        flags: tests
+        paths: "tests/"
       app:
         target: 98%
-        flags: app
+        paths: "app/"
   ignore:
     - "thirdparty/"
     - "configs/"

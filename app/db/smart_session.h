@@ -45,6 +45,7 @@ class SmartSession : public mysqlx::Session {
   // Return current schema, if there are no schema it will throw an error.
   mysqlx::Schema& GetCurrentSchema() const;
  private:
+  void UseDatabase(const char* db_name);
   std::shared_ptr<mysqlx::Schema> current_schema_;
 };
 

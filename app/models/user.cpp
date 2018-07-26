@@ -24,6 +24,7 @@
 
 #include "models/user.h"
 #include "db/session_pool.h"
+#include "db/smart_session.h"
 
 namespace ppic {
 
@@ -49,7 +50,6 @@ mysqlx::SqlResult UserDbManager::CreateTable(const char* table_name) {
                 DEFAULT CURRENT_TIMESTAMP,              \
             PRIMARY KEY (id)                            \
             );", table_name);
-  session->sql("use ppic_test;").execute();
   return session->sql(create_sql).execute();
 }
 

@@ -43,6 +43,7 @@ using mysqlx::Session;
 
 class SessionPool;
 typedef Singleton<SessionPool> SessionPoolSingleton;
+class SmartSession;
 
 class SessionPoolOption {
  public:
@@ -51,8 +52,8 @@ class SessionPoolOption {
   SessionPoolOption& FromEnv(const char* url_env="MYSQL_CONNECTION_URL",
                              const char* db_env="MYSQL_DATABASE");
   SessionPoolOption& set_capacity(uint16_t capacity) { capacity_ = capacity; return *this; }
-  const string& url() const { return url_; }
-  const string& db() const { return db_; }
+  const char* url() const { return url_.c_str(); }
+  const char* db() const { return db_.c_str(); }
   const uint16_t capacity() const { return capacity_; }
  private:
   string url_;
@@ -69,13 +70,13 @@ class SessionPool {
   ~SessionPool() { DestroyPool(); }
   SessionPool& InitPool(const SessionPoolOption&);
   void DestroyPool();
-  std::shared_ptr<Session> ObtainSession();
-  void ReleaseSession(std::shared_ptr<Session>&);
+  std::shared_ptr<SmartSession> ObtainSession();
+  void ReleaseSession(std::shared_ptr<SmartSession>&);
  private:
   friend class Singleton<SessionPool>;
   SessionPool();
 
-  std::list<std::shared_ptr<Session>> pool_;
+  std::list<std::shared_ptr<SmartSession>> pool_;
   SessionPoolOption option_;
   uint16_t current_size_;
   std::mutex pool_mtx_;

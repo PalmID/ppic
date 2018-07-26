@@ -26,18 +26,21 @@
 #include "gtest/gtest.h"
 #include "mysqlx/xdevapi.h"
 #include <stdio.h>
+#include <string>
 #include <map>
 #include <thread>
 #include <chrono>
 
 namespace {
 
+using std::string;
+
 using ppic::db::SessionPoolSingleton;
 using ppic::db::SessionPoolOption;
 
 TEST(SessionPoolOptionTest, test_url_with_constructor_parameters) {
   auto option = SessionPoolOption("root", "test", "localhost", 16);
-  EXPECT_EQ(option.url(), "root:test@localhost:33060");
+  EXPECT_EQ(string(option.url()), "root:test@localhost:33060");
   EXPECT_EQ(option.capacity(), 16);
 }
 
@@ -49,8 +52,8 @@ TEST(SessionPoolOptionTest, test_url_and_db_with_env) {
   setenv(url_env, url, 1);
   setenv(db_env, db, 1);
   SessionPoolOption option;
-  EXPECT_EQ(option.FromEnv(url_env, db_env).set_capacity(16).url(), url);
-  EXPECT_EQ(option.db(), db);
+  EXPECT_EQ(option.FromEnv(url_env, db_env).set_capacity(16).url(), string(url));
+  EXPECT_EQ(string(option.db()), db);
   EXPECT_EQ(option.capacity(), 16);
   unsetenv(url_env);
   unsetenv(db_env);
