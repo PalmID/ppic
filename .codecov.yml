@@ -9,13 +9,13 @@ coverage:
         default:
           enabled: yes
           target: 90%
-          flags: tests
+          paths: "tests/"
           base: auto
       app:
         default:
           enabled: yes
           target: 95%
-          flags: app
+          paths: "app/"
           base: auto
     patch:
       default: false
@@ -23,13 +23,13 @@ coverage:
         default:
           enabled: yes
           target: 95%
-          flags: tests
+          paths: "tests/"
           base: auto
       app:
         default:
           enabled: yes
           target: 98%
-          flags: app
+          paths: "app/"
           base: auto
   ignore:
     - "thirdparty/"
