@@ -67,6 +67,8 @@ class SessionPoolOption {
 
 class SessionPool {
  public:
+  SessionPool(const SessionPool&) = delete;
+  SessionPool& operator=(const SessionPool&) = delete;
   ~SessionPool() { DestroyPool(); }
   SessionPool& InitPool(const SessionPoolOption&);
   void DestroyPool();

@@ -47,15 +47,17 @@ class User {
   User& operator=(const User&) = delete;
 
   uint64_t id() { return id_; }
-  const string& name() { return name_; }
-  const string& registration_date() { return registration_date_ ; }
+  const char* name() { return name_.c_str(); }
+  const char* registration_at() { return registration_at_.c_str() ; }
  private:
   friend class UserDbManager;
   User() {}
+  User(uint64_t id, const string& name, const string& registration_at)
+    : id_(id), name_(name), registration_at_(registration_at) {}
 
   uint64_t id_;
   string name_;
-  string registration_date_;
+  string registration_at_;
 };
 
 class UserDbManager {
@@ -63,14 +65,15 @@ class UserDbManager {
   UserDbManager(const UserDbManager&) = delete;
   UserDbManager& operator=(const UserDbManager&) = delete;
 
-  std::shared_ptr<Table> table() { return table_; }
-  mysqlx::SqlResult CreateTable(const char* table_name="user");
-  std::unique_ptr<User> CreateUser(const string& name);
-  //User GetUserById(uint64_t id);
+  std::shared_ptr<Table> GetOrCreateTable(const char* table_name="user");
+  void DropTable();
+  std::shared_ptr<User> CreateUser(const string& name);
+  std::shared_ptr<User> GetUserById(uint64_t id);
   //mysqlx::Result DeleteById(uint64_t id);
  private:
   friend class Singleton<UserDbManager>;
   UserDbManager() : table_name_("") {}
+  std::shared_ptr<User> RowToUser(const mysqlx::Row&);
 
   string table_name_;
   std::mutex table_mtx_;

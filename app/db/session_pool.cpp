@@ -96,6 +96,7 @@ void SessionPool::DestroyPool() {
 
 std::shared_ptr<SmartSession> SessionPool::ObtainSession() {
   std::unique_lock<std::mutex> lock(pool_mtx_);
+  assert (current_size_ > 0);
   if (pool_.size() == 0
       && current_size_ < option_.capacity()) {
     auto session = std::make_shared<SmartSession>(option_);
