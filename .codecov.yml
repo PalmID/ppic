@@ -5,32 +5,27 @@ coverage:
   status:
     project:
       default: false
+      enabled: yes
       tests:
-        default:
-          enabled: yes
-          target: 90%
-          paths: "tests/"
-          base: auto
+        target: 90%
+        flags: tests
+        base: auto
       app:
-        default:
-          enabled: yes
-          target: 95%
-          paths: "app/"
-          base: auto
+        target: 95%
+        flags: app
+        base: auto
     patch:
       default: false
+      enabled: yes
       tests:
-        default:
-          enabled: yes
-          target: 95%
-          paths: "tests/"
-          base: auto
+        target: 95%
+        flags: tests
+        base: auto
       app:
-        default:
-          enabled: yes
-          target: 98%
-          paths: "app/"
-          base: auto
+        enabled: yes
+        target: 98%
+        flags: app
+        base: auto
   ignore:
     - "thirdparty/"
     - "configs/"
