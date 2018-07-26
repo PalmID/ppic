@@ -4,29 +4,29 @@ coverage:
   range: "90...95"
   status:
     project:
-      default:
-        tests:
-          enabled: yes
-          target: 90%
-          flags: tests
-          base: auto
-        app:
-          enabled: yes
-          target: 95%
-          flags: app
-          base: auto
+      default: false
+      tests:
+        enabled: yes
+        target: 90%
+        flags: tests
+        base: auto
+      app:
+        enabled: yes
+        target: 95%
+        flags: app
+        base: auto
     patch:
-      default:
-        tests:
-          enabled: yes
-          target: 95%
-          flags: tests
-          base: auto
-        app:
-          enabled: yes
-          target: 98%
-          flags: app
-          base: auto
+      default: false
+      tests:
+        enabled: yes
+        target: 95%
+        flags: tests
+        base: auto
+      app:
+        enabled: yes
+        target: 98%
+        flags: app
+        base: auto
   ignore:
     - "thirdparty/"
     - "configs/"
