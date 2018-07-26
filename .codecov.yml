@@ -6,7 +6,7 @@ coverage:
     project:
       default:
         target: 95%
-        flags: app
+        paths: "app/"
     patch:
       default:
         target: 98%
