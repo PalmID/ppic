@@ -26,6 +26,7 @@
 #define PPIC_DB_SESSION_POOL_H_
 
 #include "common/singleton.h"
+#include "db/smart_session.h"
 #include "mysqlx/xdevapi.h"
 #include <string>
 #include <list>
@@ -43,7 +44,6 @@ using mysqlx::Session;
 
 class SessionPool;
 typedef Singleton<SessionPool> SessionPoolSingleton;
-class SmartSession;
 
 class SessionPoolOption {
  public:

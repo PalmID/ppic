@@ -23,7 +23,6 @@
 \*****************************************************************************/
 
 #include "db/session_pool.h"
-#include "db/smart_session.h"
 #include <cstdlib>
 #include <cassert>
 
