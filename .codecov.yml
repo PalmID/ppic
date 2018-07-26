@@ -4,25 +4,45 @@ coverage:
   range: "90...95"
   status:
     project:
-      default:
-        tests:
-          target: 90%
-          paths: "tests/"
-          base: auto
-        app:
-          target: 95%
-          flags: app
-          base: auto
+      default: false
+      tests:
+        target: 90%
+        base: auto
+        if_no_uploads: error
+        if_not_found: success
+        if_ci_failed: error
+        only_pulls: false
+        flags: tests
+        paths: null
+      app:
+        target: 95%
+        base: auto
+        if_no_uploads: error
+        if_not_found: success
+        if_ci_failed: error
+        only_pulls: false
+        flags: app
+        paths: null
     patch:
-      default:
-        tests:
-          target: 95%
-          flags: tests
-          base: auto
-        app:
-          target: 98%
-          flags: app
-          base: auto
+      default: false
+      tests:
+        target: 95%
+        base: auto
+        if_no_uploads: error
+        if_not_found: success
+        if_ci_failed: error
+        only_pulls: false
+        flags: tests
+        paths: null
+      app:
+        target: 98%
+        base: auto
+        if_no_uploads: error
+        if_not_found: success
+        if_ci_failed: error
+        only_pulls: false
+        flags: app
+        paths: null
   ignore:
     - "thirdparty/"
     - "configs/"
