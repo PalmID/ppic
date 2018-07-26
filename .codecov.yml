@@ -7,10 +7,10 @@ coverage:
       default: off
       tests:
         target: 90%
-        flags: tests
+        paths: "tests/"
       app:
         target: 95%
-        flags: app
+        paths: "app/"
     patch:
       default: off
       tests:
