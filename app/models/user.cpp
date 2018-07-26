@@ -69,6 +69,7 @@ void UserDbManager::DropTable() {
   auto session = SessionPoolSingleton::instance()->ObtainSession();
   session->dropSchema(table_name_);
   SessionPoolSingleton::instance()->ReleaseSession(session);
+  table_.reset();
 }
 
 std::shared_ptr<User> UserDbManager::CreateUser(const string& name) {
