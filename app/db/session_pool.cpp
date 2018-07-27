@@ -36,7 +36,7 @@ SessionPoolOption::SessionPoolOption()
 
 SessionPoolOption::SessionPoolOption(const string& user, const string& password, const string& host, uint16_t capacity, uint16_t port)
   : user_(user), password_(password), host_(host), capacity_(capacity), port_(port) {
-    char url[512] = {};
+    char url[512] = {0};
     sprintf(url, "%s:%s@%s:%u", user_.c_str(), password_.c_str(), host_.c_str(), port_);
     url_ = url;
 }
@@ -74,7 +74,7 @@ SessionPool& SessionPool::InitPool(const SessionPoolOption& option) {
   // 并在可用连接不足时扩容(按照一定策略扩)，在闲置连接富余时缩容(按照一定策略缩)。
   for (uint16_t i = 0; i < option.capacity() / 2 + 1; ++i) {
     try {
-      pool_.push_back(std::make_shared<SmartSession>(option_));
+      pool_.emplace_back(std::make_shared<SmartSession>(option_));
       current_size_++;
     } catch (const mysqlx::Error &err) {
       char msg[128];
@@ -104,9 +104,8 @@ std::shared_ptr<SmartSession> SessionPool::ObtainSession() {
     return session;
   }
 
-  while (pool_.size() == 0) {
-    pool_cv_.wait(lock);
-  }
+  pool_cv_.wait(lock, [this]{return pool_.size() > 0;});
+
   auto session = pool_.front();
   pool_.pop_front();
   return session;
@@ -116,7 +115,7 @@ void SessionPool::ReleaseSession(std::shared_ptr<SmartSession>& session) {
   std::unique_lock<std::mutex> lock(pool_mtx_);
   // 只有引用个数为1时才能释放，不然可能会导致两个不同的线程持有相同的session
   if (session.use_count() == 1) {
-    pool_.push_back(session);
+    pool_.emplace_back(session);
     pool_cv_.notify_one();
   }
 }

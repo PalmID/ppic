@@ -99,7 +99,11 @@ TEST(SessionPoolTest, test_capacity_2_when_3_threads_want_to_obtain_session) {
     ts[i].join();
   }
 
-  EXPECT_TRUE(sess_thread.at(tids[0]) == sess_thread.at(tids[2]) || sess_thread.at(tids[1]) == sess_thread.at(tids[2]));
+  if (sess_thread.at(tids[0]) == sess_thread.at(tids[2])) {
+    EXPECT_NE(sess_thread.at(tids[0]), sess_thread.at(tids[1]));
+  } else {
+    EXPECT_EQ(sess_thread.at(tids[0]), sess_thread.at(tids[1]));
+  }
 
   SessionPoolSingleton::instance()->DestroyPool();
 }
