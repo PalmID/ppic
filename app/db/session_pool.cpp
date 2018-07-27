@@ -72,7 +72,7 @@ SessionPool& SessionPool::InitPool(const SessionPoolOption& option) {
   option_ = option;
   // TODO: 根据一定的策略初始化SessionPool的初始连接数，减少使用连接时的开销。
   // 并在可用连接不足时扩容(按照一定策略扩)，在闲置连接富余时缩容(按照一定策略缩)。
-  for (uint16_t i = 0; i < option.capacity() / 2; ++i) {
+  for (uint16_t i = 0; i < option.capacity() / 2 + 1; ++i) {
     try {
       pool_.push_back(std::make_shared<SmartSession>(option_));
       current_size_++;
