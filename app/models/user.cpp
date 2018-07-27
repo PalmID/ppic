@@ -99,6 +99,9 @@ std::shared_ptr<User> UserDbManager::GetUserById(uint64_t id) {
 }
 
 std::shared_ptr<User> UserDbManager::RowToUser(const mysqlx::Row& row) {
+  if (row.isNull()) {
+    return nullptr;
+  }
   return std::shared_ptr<User>{new User(row[0], row[1], row[2])};
 }
 

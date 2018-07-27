@@ -78,11 +78,41 @@ TEST_F(UserModelTestFixture, test_get_or_create_table_twice_with_different_name)
   EXPECT_THROW(UserDbManagerSingleton::instance()->GetOrCreateTable(user_tbl_name2), std::runtime_error);
 }
 
+TEST_F(UserModelTestFixture, test_drop_table_twice) {
+  EXPECT_NO_THROW(UserDbManagerSingleton::instance()->DropTable());
+  EXPECT_NO_THROW(UserDbManagerSingleton::instance()->DropTable());
+}
+
 TEST_F(UserModelTestFixture, test_create_user) {
   string user_name("user 1");
   auto user = UserDbManagerSingleton::instance()->CreateUser(user_name);
 
   EXPECT_EQ(user->name(), user_name);
-}   
+}
+
+TEST_F(UserModelTestFixture, test_create_two_user) {
+  string user_name1("user 1");
+  string user_name2("user 2");
+  auto user1 = UserDbManagerSingleton::instance()->CreateUser(user_name1);
+  auto user2 = UserDbManagerSingleton::instance()->CreateUser(user_name2);
+
+  EXPECT_LT(user1->id(), user2->id());
+  EXPECT_NE(user1->name(), string(user2->name()));
+}
+
+TEST_F(UserModelTestFixture, test_get_user_when_no_user) {
+  uint64_t id = 100;
+  auto user = UserDbManagerSingleton::instance()->GetUserById(id);
+  
+  EXPECT_FALSE(user);
+}
+
+TEST_F(UserModelTestFixture, test_get_user_when_exist) {
+  string user_name("daming");
+  auto res = UserDbManagerSingleton::instance()->CreateUser(user_name);
+  auto user = UserDbManagerSingleton::instance()->GetUserById(res->id());
+  
+  EXPECT_EQ(user->name(), user_name);
+}
 
 }   // namespace 
