@@ -63,7 +63,7 @@ SessionPoolOption& SessionPoolOption::FromEnv(const char* url_env, const char* d
 
 
 SessionPool::SessionPool()
-  : current_size_(0) {
+  : current_size_(0), usable_(true) {
 }
 
 SessionPool& SessionPool::InitPool(const SessionPoolOption& option) {
@@ -91,20 +91,24 @@ void SessionPool::DestroyPool() {
     session->close();
   }
   current_size_ = 0;
+  usable_ = false;
   pool_.clear();
+  pool_cv_.notify_all();
 }
 
 std::shared_ptr<SmartSession> SessionPool::ObtainSession() {
   std::unique_lock<std::mutex> lock(pool_mtx_);
-  assert (current_size_ > 0);
-  if (pool_.size() == 0
-      && current_size_ < option_.capacity()) {
+
+  if (usable_ && pool_.size() == 0 && current_size_ < option_.capacity()) {
     auto session = std::make_shared<SmartSession>(option_);
     current_size_++;
     return session;
   }
 
-  pool_cv_.wait(lock, [this]{return pool_.size() > 0;});
+  pool_cv_.wait(lock, [this]{return !usable_ || !pool_.empty();});
+  if (!usable_ && pool_.empty()) {
+    return nullptr;
+  }
 
   auto session = pool_.front();
   pool_.pop_front();

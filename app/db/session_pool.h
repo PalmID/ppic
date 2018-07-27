@@ -80,6 +80,7 @@ class SessionPool {
 
   std::list<std::shared_ptr<SmartSession>> pool_;
   SessionPoolOption option_;
+  bool usable_;
   uint16_t current_size_;
   std::mutex pool_mtx_;
   std::condition_variable pool_cv_;
