@@ -99,15 +99,14 @@ TEST(SessionPoolTest, test_capacity_2_when_3_threads_want_to_obtain_session) {
     ts[i].join();
   }
 
-  EXPECT_TRUE(sess_thread.at(tids[0]) == sess_thread.at(tids[2])
-              || sess_thread.at(tids[1]) == sess_thread.at(tids[2]));
+  EXPECT_TRUE(sess_thread.at(tids[0]) == sess_thread.at(tids[2]) || sess_thread.at(tids[1]) == sess_thread.at(tids[2]));
 
   SessionPoolSingleton::instance()->DestroyPool();
 }
 
-TEST(SessionPoolTest, test_capacity_1_when_10_threads_want_to_obtain_session) {
+TEST(SessionPoolTest, test_capacity_3_when_10_threads_want_to_obtain_session) {
   SessionPoolOption option;
-  option.FromEnv().set_capacity(1);
+  option.FromEnv().set_capacity(3);
   SessionPoolSingleton::instance()->InitPool(option);
 
   int count = 0;
