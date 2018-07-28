@@ -82,6 +82,7 @@ SessionPool& SessionPool::InitPool(const SessionPoolOption& option) {
       throw std::runtime_error(msg);
     }
   }
+  usable_ = true;
   return *this;
 }
 
@@ -99,13 +100,14 @@ void SessionPool::DestroyPool() {
 std::shared_ptr<SmartSession> SessionPool::ObtainSession() {
   std::unique_lock<std::mutex> lock(pool_mtx_);
 
-  if (usable_ && pool_.size() == 0 && current_size_ < option_.capacity()) {
+  if (usable_ && pool_.empty() && current_size_ < option_.capacity()) {
     auto session = std::make_shared<SmartSession>(option_);
     current_size_++;
     return session;
   }
 
   pool_cv_.wait(lock, [this]{return !usable_ || !pool_.empty();});
+
   if (!usable_ && pool_.empty()) {
     return nullptr;
   }

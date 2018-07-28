@@ -85,6 +85,7 @@ TEST(SessionPoolTest, test_capacity_2_when_3_threads_want_to_obtain_session) {
   std::mutex map_mtx;
   auto entry = [&]() {
     auto sess = SessionPoolSingleton::instance()->ObtainSession();
+    EXPECT_TRUE(sess);
     SessionPoolSingleton::instance()->ReleaseSession(sess);
     std::lock_guard<std::mutex> guard(map_mtx);
     sess_thread.insert(std::pair<std::thread::id, long>(std::this_thread::get_id(), (long)sess.get()));
@@ -116,7 +117,7 @@ TEST(SessionPoolTest, test_capacity_3_when_10_threads_want_to_obtain_session) {
   int count = 0;
   auto entry = [&]() {
     auto sess = SessionPoolSingleton::instance()->ObtainSession();
-    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    EXPECT_TRUE(sess);
     count += 1;
     SessionPoolSingleton::instance()->ReleaseSession(sess);
   };
