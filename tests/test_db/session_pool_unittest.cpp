@@ -118,6 +118,7 @@ TEST(SessionPoolTest, test_capacity_3_when_10_threads_want_to_obtain_session) {
   auto entry = [&]() {
     auto sess = SessionPoolSingleton::instance()->ObtainSession();
     EXPECT_TRUE(sess);
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
     count += 1;
     SessionPoolSingleton::instance()->ReleaseSession(sess);
   };
