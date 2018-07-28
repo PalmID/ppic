@@ -26,6 +26,7 @@
 #define PPIC_DB_SESSION_POOL_H_
 
 #include "common/singleton.h"
+#include "db/smart_session.h"
 #include "mysqlx/xdevapi.h"
 #include <string>
 #include <list>
@@ -51,8 +52,8 @@ class SessionPoolOption {
   SessionPoolOption& FromEnv(const char* url_env="MYSQL_CONNECTION_URL",
                              const char* db_env="MYSQL_DATABASE");
   SessionPoolOption& set_capacity(uint16_t capacity) { capacity_ = capacity; return *this; }
-  const string& url() const { return url_; }
-  const string& db() const { return db_; }
+  const char* url() const { return url_.c_str(); }
+  const char* db() const { return db_.c_str(); }
   const uint16_t capacity() const { return capacity_; }
  private:
   string url_;
@@ -66,17 +67,20 @@ class SessionPoolOption {
 
 class SessionPool {
  public:
+  SessionPool(const SessionPool&) = delete;
+  SessionPool& operator=(const SessionPool&) = delete;
   ~SessionPool() { DestroyPool(); }
   SessionPool& InitPool(const SessionPoolOption&);
   void DestroyPool();
-  std::shared_ptr<Session> ObtainSession();
-  void ReleaseSession(std::shared_ptr<Session>&);
+  std::shared_ptr<SmartSession> ObtainSession();
+  void ReleaseSession(std::shared_ptr<SmartSession>&);
  private:
   friend class Singleton<SessionPool>;
   SessionPool();
 
-  std::list<std::shared_ptr<Session>> pool_;
+  std::list<std::shared_ptr<SmartSession>> pool_;
   SessionPoolOption option_;
+  bool usable_;
   uint16_t current_size_;
   std::mutex pool_mtx_;
   std::condition_variable pool_cv_;

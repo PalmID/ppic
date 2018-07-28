@@ -12,3 +12,5 @@ RUN apk add --no-cache --virtual build-dependencies make cmake gcompat linux-hea
 COPY lcov /usr/bin
 COPY genhtml /usr/bin
 COPY geninfo /usr/bin
+
+RUN apk add --no-cache gdb

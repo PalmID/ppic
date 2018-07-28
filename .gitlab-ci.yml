@@ -23,8 +23,7 @@ build_test_coverage:
   coverage: '/lines[\.]+\: (\d+\.\d+)\%/'
   script:
     - mkdir -p test_build; cd test_build
-    - cmake ../tests; make -j
-    - ./ppic_test
+    - cmake ../tests; make -j build_and_test
     - lcov -b . -d . -c -o cov.info
     - lcov -r cov.info "/usr/*" "*/thirdparty/*" "*/tests/*" "*/test_build/*" -o cov.info -q
     - lcov -l cov.info

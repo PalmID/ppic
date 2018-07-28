@@ -34,15 +34,23 @@ using mysqlx::Schema;
 SmartSession::SmartSession(const SessionPoolOption& option)
   : Session(option.url()) {
   current_schema_ = std::make_shared<Schema>(createSchema(option.db(), true));
+  UseDatabase(option.db());
 }
 
 SmartSession& SmartSession::SelectSchema(const char* schema_name) {
   current_schema_ = std::make_shared<Schema>(createSchema(schema_name, true));
+  UseDatabase(schema_name);
   return *this;
 }
 
 Schema& SmartSession::GetCurrentSchema() const {
   return *current_schema_.get();
+}
+
+void SmartSession::UseDatabase(const char* db_name) {
+  char sql_str[128] = {0};
+  snprintf(sql_str, 128, "USE %s;", db_name);
+  sql(sql_str).execute();
 }
 
 }   // namespace db

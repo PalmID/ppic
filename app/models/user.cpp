@@ -24,6 +24,7 @@
 
 #include "models/user.h"
 #include "db/session_pool.h"
+#include "db/smart_session.h"
 
 namespace ppic {
 
@@ -31,35 +32,77 @@ namespace model {
 
 using ppic::db::SessionPoolSingleton;
 
-mysqlx::SqlResult UserDbManager::CreateTable(const char* table_name) {
-  auto session = SessionPoolSingleton::instance()->ObtainSession();
+std::shared_ptr<Table> UserDbManager::GetOrCreateTable(const char* table_name) {
   std::lock_guard<std::mutex> lock(table_mtx_);
-  if (!table_name_.empty() && table_name_ != table_name) {
+  if (table_ && table_name_ != table_name) {
     char msg[128];
     snprintf(msg, 128, "[ERROR] Can't create `user` model twice with different table name.");
     throw std::runtime_error(msg);
   }
-  table_name_ = table_name;
+  if (!table_) {
+    table_name_ = table_name;
+  } else {
+    return table_;
+  }
+  
+  auto session = SessionPoolSingleton::instance()->ObtainSession();
   char create_sql[1024];
   snprintf(create_sql, 1024,
            "CREATE TABLE IF NOT EXISTS %s (             \
             id INT UNSIGNED NOT NULL AUTO_INCREMENT,    \
             name VARCHAR(128) NOT NULL,                 \
-            registration_date TIMESTAMP NOT NULL        \
+            registration_at TIMESTAMP NOT NULL          \
                 DEFAULT CURRENT_TIMESTAMP,              \
             PRIMARY KEY (id)                            \
             );", table_name);
-  session->sql("use ppic_test;").execute();
-  return session->sql(create_sql).execute();
+  session->sql(create_sql).execute();
+  table_ = std::make_shared<Table>(session->GetCurrentSchema().getTable(table_name));
+  SessionPoolSingleton::instance()->ReleaseSession(session);
+  return table_;
 }
 
-std::unique_ptr<User> UserDbManager::CreateUser(const string& name) {
+void UserDbManager::DropTable() {
+  std::lock_guard<std::mutex> lock(table_mtx_);
+  if (!table_) {
+    return;
+  }
   auto session = SessionPoolSingleton::instance()->ObtainSession();
-  std::unique_ptr<User> user{new User()};
-  user->id_ = 0;
-  user->name_ = name;
-  user->registration_date_ = "";
-  return user;
+  session->dropSchema(table_name_);
+  SessionPoolSingleton::instance()->ReleaseSession(session);
+  table_.reset();
+}
+
+std::shared_ptr<User> UserDbManager::CreateUser(const string& name) {
+  std::unique_lock<std::mutex> lock(table_mtx_);
+  if (!table_) {
+    lock.unlock();
+    GetOrCreateTable();
+    lock.lock();
+  }
+  auto res = table_->insert("name").values(name).execute();
+  uint64_t id = res.getAutoIncrementValue();
+  lock.unlock();
+  return GetUserById(id);
+}
+
+std::shared_ptr<User> UserDbManager::GetUserById(uint64_t id) {
+  std::unique_lock<std::mutex> lock(table_mtx_);
+  if (!table_) {
+    lock.unlock();
+    GetOrCreateTable();
+    lock.lock();
+  }
+  auto res = table_->select("id", "name", "registration_at").where("id = :id").bind("id", id).execute();
+  auto row = res.fetchOne();
+  lock.unlock();
+  return RowToUser(row);
+}
+
+std::shared_ptr<User> UserDbManager::RowToUser(const mysqlx::Row& row) {
+  if (row.isNull()) {
+    return nullptr;
+  }
+  return std::shared_ptr<User>{new User(row[0], row[1], row[2])};
 }
 
 }   // namespace model

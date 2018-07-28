@@ -26,18 +26,22 @@
 #include "gtest/gtest.h"
 #include "mysqlx/xdevapi.h"
 #include <stdio.h>
+#include <string>
 #include <map>
 #include <thread>
 #include <chrono>
 
 namespace {
 
+using std::string;
+
 using ppic::db::SessionPoolSingleton;
 using ppic::db::SessionPoolOption;
 
 TEST(SessionPoolOptionTest, test_url_with_constructor_parameters) {
   auto option = SessionPoolOption("root", "test", "localhost", 16);
-  EXPECT_EQ(option.url(), "root:test@localhost:33060");
+
+  EXPECT_EQ(string(option.url()), "root:test@localhost:33060");
   EXPECT_EQ(option.capacity(), 16);
 }
 
@@ -49,9 +53,11 @@ TEST(SessionPoolOptionTest, test_url_and_db_with_env) {
   setenv(url_env, url, 1);
   setenv(db_env, db, 1);
   SessionPoolOption option;
-  EXPECT_EQ(option.FromEnv(url_env, db_env).set_capacity(16).url(), url);
-  EXPECT_EQ(option.db(), db);
+
+  EXPECT_EQ(option.FromEnv(url_env, db_env).set_capacity(16).url(), string(url));
+  EXPECT_EQ(string(option.db()), db);
   EXPECT_EQ(option.capacity(), 16);
+
   unsetenv(url_env);
   unsetenv(db_env);
 }
@@ -66,6 +72,7 @@ TEST(SessionPoolOptionTest, test_url_with_env_doesnt_exist) {
 
 TEST(SessionPoolTest, test_incorrect_mysql_url_when_create_session) {
   SessionPoolOption option("root", "incorrect", "mysql", 16);
+
   EXPECT_THROW(SessionPoolSingleton::instance()->InitPool(option), std::runtime_error);
 }
 
@@ -76,25 +83,54 @@ TEST(SessionPoolTest, test_capacity_2_when_3_threads_want_to_obtain_session) {
 
   std::map<std::thread::id, long> sess_thread;
   std::mutex map_mtx;
-  auto entry = [&](int ms) {
+  auto entry = [&]() {
     auto sess = SessionPoolSingleton::instance()->ObtainSession();
-    std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+    EXPECT_TRUE(sess);
     SessionPoolSingleton::instance()->ReleaseSession(sess);
     std::lock_guard<std::mutex> guard(map_mtx);
     sess_thread.insert(std::pair<std::thread::id, long>(std::this_thread::get_id(), (long)sess.get()));
   };
-  std::thread t1(entry, 200);
-  std::thread t2(entry, 300);
-  std::thread::id t1_id = t1.get_id();
-  std::thread::id t2_id = t2.get_id();
-  t1.join();
-  t2.join();
-  std::this_thread::sleep_for(std::chrono::milliseconds(100));
-  std::thread t3(entry, 0);
-  std::thread::id t3_id = t3.get_id();
-  t3.join();
+  std::thread ts[3];
+  std::thread::id tids[3];
+  for (int i = 0; i < 3; ++i) {
+    ts[i] = std::thread(entry);
+    tids[i] = ts[i].get_id();
+  }
+  for (int i = 0; i < 3; ++i) {
+    ts[i].join();
+  }
 
-  EXPECT_TRUE(sess_thread.at(t1_id) == sess_thread.at(t3_id) || sess_thread.at(t2_id) == sess_thread.at(t3_id));
+  if (sess_thread.at(tids[0]) == sess_thread.at(tids[2])) {
+    EXPECT_NE(sess_thread.at(tids[0]), sess_thread.at(tids[1]));
+  } else {
+    EXPECT_EQ(sess_thread.at(tids[0]), sess_thread.at(tids[1]));
+  }
+
+  SessionPoolSingleton::instance()->DestroyPool();
+}
+
+TEST(SessionPoolTest, test_capacity_3_when_10_threads_want_to_obtain_session) {
+  SessionPoolOption option;
+  option.FromEnv().set_capacity(3);
+  SessionPoolSingleton::instance()->InitPool(option);
+
+  int count = 0;
+  auto entry = [&]() {
+    auto sess = SessionPoolSingleton::instance()->ObtainSession();
+    EXPECT_TRUE(sess);
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    count += 1;
+    SessionPoolSingleton::instance()->ReleaseSession(sess);
+  };
+  std::thread ts[10];
+  for (int i = 0; i < 10; ++i) {
+    ts[i] = std::thread(entry);
+  }
+  for (int i = 0; i < 10; ++i) {
+    ts[i].join();
+  }
+
+  EXPECT_EQ(count, 10);
 
   SessionPoolSingleton::instance()->DestroyPool();
 }

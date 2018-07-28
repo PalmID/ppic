@@ -166,12 +166,33 @@ startapp() {
         "
 }
 
+gdbapp() {
+    start_services
+    is_docker_network_exist ${PPIC_DOCKER_NETWORK}
+    if [ $? = 0 ]; then
+        restartmysql
+    fi
+    # start the rpc server
+    docker stop ${PPIC_CONTAINER_NAME} 2>/dev/null
+    docker rm -v ${PPIC_CONTAINER_NAME} 2>/dev/null
+    docker run -it --rm --name ${PPIC_CONTAINER_NAME} --network ${PPIC_DOCKER_NETWORK} \
+        --cap-add=SYS_PTRACE --security-opt seccomp=unconfined \
+        -v ${CurDir}:/home/ppic -w /home/ppic \
+        -e MYSQL_CONNECTION_URL=${MYSQL_CONNECTION_URL} \
+        -e MYSQL_DATABASE=${MYSQL_DATABASE} \
+        ${PPIC_CI_IMAGE} sh -c " \
+            rm -rf ${BUILD_DIR} && mkdir -p ${BUILD_DIR} && cd ${BUILD_DIR} \
+            && cmake ../app && make -j && gdb ${APP_EXE} \
+        "
+}
+
 runtest() {
     start_services
     is_docker_network_exist ${PPIC_DOCKER_NETWORK}
     if [ $? = 0 ]; then
         restartmysql
     fi
+    dropdb ${MYSQL_DATABASE}
     docker stop ${PPIC_CONTAINER_NAME} 2>/dev/null
     docker rm -v ${PPIC_CONTAINER_NAME} 2>/dev/null
     docker run -it --rm --name ${PPIC_CONTAINER_NAME} --network ${PPIC_DOCKER_NETWORK} \
@@ -181,6 +202,26 @@ runtest() {
         ${PPIC_CI_IMAGE} sh -c " \
             mkdir -p ${BUILD_DIR} && cd ${BUILD_DIR} \
             && cmake ../tests && make -j build_and_test
+        "
+}
+
+gdbtest() {
+    start_services
+    is_docker_network_exist ${PPIC_DOCKER_NETWORK}
+    if [ $? = 0 ]; then
+        restartmysql
+    fi
+    dropdb ${MYSQL_DATABASE}
+    docker stop ${PPIC_CONTAINER_NAME} 2>/dev/null
+    docker rm -v ${PPIC_CONTAINER_NAME} 2>/dev/null
+    docker run -it --rm --name ${PPIC_CONTAINER_NAME} --network ${PPIC_DOCKER_NETWORK} \
+        --cap-add=SYS_PTRACE --security-opt seccomp=unconfined \
+        -v ${CurDir}:/home/ppic -w /home/ppic \
+        -e MYSQL_CONNECTION_URL=${MYSQL_CONNECTION_URL} \
+        -e MYSQL_DATABASE=${MYSQL_DATABASE} \
+        ${PPIC_CI_IMAGE} sh -c " \
+            mkdir -p ${BUILD_DIR} && cd ${BUILD_DIR} \
+            && cmake ../tests && make -j && gdb ${APP_TEST_NAME}
         "
 }
 
@@ -201,7 +242,9 @@ cpplint() {
 
 case "$1" in
     startapp) startapp ;;
+    gdbapp) gdbapp ;;
     runtest) runtest ;;
+    gdbtest) gdbtest ;;
     cpplint) cpplint ;;
     createdb) createdb $2 ;;
     dropdb) dropdb $2 ;;
@@ -213,8 +256,8 @@ case "$1" in
     updateimages) updateimages ;;
     *)
         echo "Usage:"
-        echo "./manage.sh startapp"
-        echo "./manage.sh runtest"
+        echo "./manage.sh startapp|gdbapp"
+        echo "./manage.sh runtest|gdbtest"
         echo "./manage.sh cpplint"
         echo "./manage.sh createdb|dropdb"
         echo "./manage.sh startmysql|stopmysql|destroymysql"
